@@ -160,11 +160,16 @@ Gsim::~Gsim() {
   theRunManager->SetUserAction(static_cast<G4UserTrackingAction *>(NULL));
 
   for (size_t i = 0; i < fPMTTime.size(); i++) {
-    delete fPMTTime[i];
-    delete fPMTCharge[i];
+    if (fPMTTime[i] != nullptr) {
+      delete fPMTTime[i];
+      fPMTTime[i] = nullptr;
+    }
+    if (fPMTCharge[i] != nullptr) {
+      delete fPMTCharge[i];
+      fPMTCharge[i] = nullptr;
+    }
   }
 }
-
 void Gsim::BeginOfRunAction(const G4Run * /*aRun*/) {
   DBLinkPtr lmc = DB::Get()->GetLink("MC");
   runID = DB::Get()->GetDefaultRun();
@@ -186,17 +191,21 @@ void Gsim::BeginOfRunAction(const G4Run * /*aRun*/) {
     delete fPMTCharge[i];
   }
 
+  const size_t numPMTNames = fPMTInfo->GetPMTNamesCount();
   const size_t numModels = fPMTInfo->GetModelCount();
-  fPMTTime.resize(numModels);
+  fPMTTime.resize(numPMTNames);
   fPMTCharge.resize(numModels);
-  for (size_t i = 0; i < numModels; i++) {
-    const std::string modelName = fPMTInfo->GetModelName(i);
+  for (size_t i = 0; i < numPMTNames; i++) {
+    const std::string pmtName = fPMTInfo->GetPMTName(i);
     try {
-      fPMTTime[i] = new RAT::PDFPMTTime(modelName);
+      fPMTTime[i] = new RAT::PDFPMTTime(pmtName);
     } catch (DBNotFoundError &e) {
       // fallback to default table if model is not available
       fPMTTime[i] = new RAT::PDFPMTTime();
     }
+  }
+  for (size_t i = 0; i < numModels; i++) {
+    const std::string modelName = fPMTInfo->GetModelName(i);
     try {
       fPMTCharge[i] = new RAT::PDFPMTCharge(modelName);
     } catch (DBNotFoundError &e) {

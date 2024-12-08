@@ -32,6 +32,9 @@ G4VPhysicalVolume *PMTFactoryBase::ConstructPMTs(
   std::string mother_name = table->GetS("mother");
   std::string pmt_model = table->GetS("pmt_model");
 
+  std::vector<std::string> pmt_names = table->GetSArray("pmt_names");
+  pmtinfo.SetPMTNames(pmt_names);
+
   DBLinkPtr lpmt = DB::Get()->GetLink("PMT", pmt_model);
 
   // Find mother volume
